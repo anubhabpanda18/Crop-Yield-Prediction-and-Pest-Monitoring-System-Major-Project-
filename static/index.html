@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgroSense — Crop Intelligence Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green-deep:   #1a3a2a;
+    --green-mid:    #2d6a4f;
+    --green-bright: #52b788;
+    --green-light:  #b7e4c7;
+    --gold:         #d4a017;
+    --gold-light:   #f4d47a;
+    --soil:         #8b5e3c;
+    --cream:        #f0f7f2;
+    --text-dark:    #1a1a1a;
+    --text-muted:   #6b7c6e;
+    --red:          #c0392b;
+    --orange:       #e67e22;
+    --card-bg:      #ffffff;
+    --border:       #e0ece4;
+    --shadow:       0 4px 24px rgba(26,58,42,0.10);
+    --shadow-lg:    0 12px 48px rgba(26,58,42,0.16);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--text-dark); min-height: 100vh; }
+
+  /* NAV */
+  nav {
+    background: var(--green-deep); padding: 0 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px; position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 16px rgba(0,0,0,.25);
+  }
+  .logo { display: flex; align-items: center; gap: .75rem; }
+  .logo-icon { font-size: 1.8rem; }
+  .logo-text { font-family: 'Playfair Display', serif; color: var(--green-light); font-size: 1.4rem; letter-spacing: .02em; }
+  .logo-text span { color: var(--gold); }
+  nav .tagline { color: var(--green-light); opacity: .6; font-size: .78rem; font-weight: 300; letter-spacing: .04em; }
+  .nav-tabs { display: flex; gap: .25rem; }
+  .nav-tab {
+    color: var(--green-light); opacity: .7; padding: .5rem 1.1rem;
+    border-radius: 8px; cursor: pointer; font-size: .88rem; font-weight: 500;
+    transition: all .2s; border: none; background: transparent;
+  }
+  .nav-tab:hover, .nav-tab.active { background: rgba(82,183,136,.18); opacity: 1; color: var(--gold-light); }
+
+  /* LAYOUT */
+  main { max-width: 1300px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+  .page { display: none; }
+  .page.active { display: block; animation: fadeIn .35s ease; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:none } }
+  .page-header { margin-bottom: 2rem; }
+  .page-title { font-family:'Playfair Display',serif; font-size:2rem; color:var(--green-deep); }
+  .page-sub { color:var(--text-muted); font-size:.9rem; margin-top:.3rem; }
+
+  /* CARDS */
+  .card { background: var(--card-bg); border-radius: 16px; padding: 1.75rem; box-shadow: var(--shadow); border: 1px solid var(--border); }
+  .card-title { font-family:'Playfair Display',serif; font-size:1.15rem; color:var(--green-deep); margin-bottom:1.25rem; display:flex; align-items:center; gap:.5rem; }
+
+  /* GRID */
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+  .grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:1.25rem; }
+
+  /* FORM */
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem; }
+  .form-group { display:flex; flex-direction:column; gap:.35rem; }
+  label { font-size:.8rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; }
+  input, select {
+    padding: .65rem .9rem; border-radius:10px; border: 1.5px solid var(--border);
+    font-size:.93rem; font-family:'DM Sans',sans-serif; color:var(--text-dark);
+    background:#fff; transition: border-color .2s, box-shadow .2s;
+  }
+  input:focus, select:focus { outline:none; border-color:var(--green-bright); box-shadow: 0 0 0 3px rgba(82,183,136,.18); }
+
+  /* BUTTONS */
+  .btn { padding:.7rem 1.6rem; border-radius:10px; font-weight:600; font-size:.9rem; cursor:pointer; border:none; transition:all .2s; font-family:'DM Sans',sans-serif; }
+  .btn-primary { background: linear-gradient(135deg, var(--green-mid), var(--green-bright)); color:#fff; box-shadow: 0 4px 14px rgba(45,106,79,.35); }
+  .btn-primary:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(45,106,79,.45); }
+  .btn-primary:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+  .btn-gold { background:linear-gradient(135deg,var(--gold),var(--gold-light)); color:var(--green-deep); font-weight:700; }
+  .btn-gold:hover { transform:translateY(-2px); }
+
+  /* RESULT PANEL */
+  .result-panel { display:none; background:linear-gradient(135deg,#f0faf4,#e8f5ee); border:1.5px solid var(--green-light); border-radius:16px; padding:1.5rem; }
+  .result-panel.visible { display:block; animation:fadeIn .4s ease; }
+  .result-panel.error-panel { background:linear-gradient(135deg,#fff5f5,#ffe8e8); border-color:#f5c6c6; }
+
+  /* STAT BOX */
+  .stat-box { background:#fff; border-radius:12px; padding:1rem 1.1rem; border:1px solid var(--border); text-align:center; }
+  .stat-label { font-size:.72rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em; }
+  .stat-value { font-family:'Playfair Display',serif; font-size:1.9rem; color:var(--green-deep); margin-top:.2rem; }
+  .stat-unit { font-size:.8rem; color:var(--text-muted); }
+
+  /* IMPACT BAR */
+  .impact-row { display:flex; align-items:center; gap:.75rem; margin-bottom:.55rem; }
+  .impact-name { font-size:.8rem; font-family:'DM Mono',monospace; width:80px; color:var(--text-muted); }
+  .impact-bar-wrap { flex:1; background:#e8f0ea; border-radius:99px; height:10px; overflow:hidden; }
+  .impact-bar { height:100%; border-radius:99px; background:linear-gradient(90deg,var(--green-mid),var(--green-bright)); transition:width .6s ease; }
+  .impact-pct { font-size:.78rem; font-family:'DM Mono',monospace; color:var(--green-mid); width:42px; text-align:right; }
+
+  /* BADGES */
+  .badge { display:inline-block; padding:.25rem .7rem; border-radius:99px; font-size:.77rem; font-weight:600; }
+  .badge-green  { background:#d4edda; color:#1a5c38; }
+  .badge-orange { background:#ffe8cc; color:#a05000; }
+  .badge-red    { background:#fde0dc; color:#8b1a1a; }
+  .badge-blue   { background:#ddeeff; color:#1a3a7a; }
+
+  /* PEST */
+  .risk-meter { width:100%; height:18px; border-radius:99px; overflow:hidden; background:#eee; margin:1rem 0; display:flex; }
+  .risk-seg { height:100%; transition:flex .6s ease; }
+  .risk-low  { background:var(--green-bright); }
+  .risk-mod  { background:var(--orange); }
+  .risk-high { background:var(--red); }
+  .big-risk  { font-family:'Playfair Display',serif; font-size:2.5rem; font-weight:900; margin:.5rem 0; }
+  .pest-tip  { display:flex; gap:.7rem; align-items:flex-start; padding:.7rem; background:#f8faf9; border-radius:8px; margin-bottom:.5rem; font-size:.87rem; }
+
+  /* SOIL */
+  .fert-card   { padding:.8rem 1rem; background:#fffbef; border:1px solid #f0d87a; border-radius:10px; margin-bottom:.6rem; }
+  .fert-issue  { font-size:.78rem; font-weight:700; color:var(--soil); text-transform:uppercase; letter-spacing:.04em; margin-bottom:.3rem; }
+  .fert-name   { font-size:.9rem; font-weight:600; color:var(--green-deep); }
+  .fert-method { font-size:.8rem; color:var(--text-muted); margin-top:.2rem; }
+
+  /* LOADER */
+  .loader { display:inline-block; width:18px; height:18px; border:2px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; vertical-align:middle; margin-right:.5rem; }
+  @keyframes spin { to { transform:rotate(360deg) } }
+
+  /* HERO */
+  .hero-btn { padding:.75rem 1.75rem; border-radius:12px; font-weight:700; font-size:.95rem; cursor:pointer; border:none; font-family:'DM Sans',sans-serif; transition:all .2s; }
+  .hero-btn-main    { background:var(--gold); color:var(--green-deep); }
+  .hero-btn-main:hover { background:var(--gold-light); transform:translateY(-2px); }
+  .hero-btn-outline { background:rgba(255,255,255,.12); color:#fff; border:1.5px solid rgba(255,255,255,.3); }
+  .hero-btn-outline:hover { background:rgba(255,255,255,.22); }
+
+  /* WORLD WEATHER */
+  .region-btn { padding:.45rem 1rem; border-radius:8px; border:1.5px solid var(--border); background:#fff; color:var(--green-deep); font-size:.85rem; font-weight:600; cursor:pointer; transition:all .2s; font-family:'DM Sans',sans-serif; }
+  .region-btn:hover, .region-btn.active { background:var(--green-mid); color:#fff; border-color:var(--green-mid); }
+  .world-city-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(185px,1fr)); gap:1rem; }
+  .city-card { background:#fff; border-radius:12px; padding:1rem; border:1px solid var(--border); box-shadow:var(--shadow); transition:transform .2s, box-shadow .2s; cursor:pointer; }
+  .city-card:hover { transform:translateY(-3px); box-shadow:var(--shadow-lg); }
+  .city-name    { font-weight:700; font-size:.95rem; color:var(--green-deep); }
+  .city-country { font-size:.72rem; color:var(--text-muted); margin-bottom:.35rem; }
+  .city-temp    { font-family:'Playfair Display',serif; font-size:1.9rem; color:var(--green-deep); line-height:1.1; }
+  .city-desc    { font-size:.76rem; color:var(--text-muted); margin-top:.2rem; }
+  .city-meta    { display:flex; justify-content:space-between; margin-top:.65rem; padding-top:.65rem; border-top:1px solid #eee; }
+  .meta-item    { font-size:.7rem; color:var(--text-muted); text-align:center; }
+  .meta-item strong { display:block; color:var(--text-dark); font-size:.8rem; margin-bottom:.1rem; }
+  .region-loading { display:none; text-align:center; padding:3rem; color:var(--text-muted); }
+  .region-loading .rl-spinner { width:32px; height:32px; border:3px solid var(--border); border-top-color:var(--green-mid); border-radius:50%; animation:spin .7s linear infinite; margin:0 auto 1rem; }
+  .forecast-card { background:#fff; border-radius:10px; padding:.85rem; border:1px solid var(--border); text-align:center; font-size:.82rem; }
+  .fc-date  { font-weight:700; color:var(--green-deep); font-size:.8rem; }
+  .fc-temp  { font-size:1.15rem; font-weight:700; color:var(--green-mid); margin:.2rem 0; }
+  .fc-range { font-size:.72rem; color:var(--text-muted); }
+  .profit-positive { color:var(--green-mid); }
+  .profit-negative { color:var(--red); }
+  .section-sep { height:1px; background:var(--border); margin:1.5rem 0; }
+
+  @media (max-width:768px) {
+    .grid-2,.grid-3 { grid-template-columns:1fr; }
+    .form-row { grid-template-columns:1fr; }
+    nav .tagline { display:none; }
+    .world-city-grid { grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">
+    <span class="logo-icon">🌾</span>
+    <div>
+      <div class="logo-text">Agro<span>Sense</span></div>
+      <div class="tagline">Crop Intelligence Platform</div>
+    </div>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="goTo('home')">🏠 Home</button>
+    <button class="nav-tab" onclick="goTo('yield')">📈 Yield Predict</button>
+    <button class="nav-tab" onclick="goTo('pest')">🪲 Pest Monitor</button>
+    <button class="nav-tab" onclick="goTo('weather')">🌤️ Weather</button>
+    <button class="nav-tab" onclick="goTo('contact')">📬 Contact Us</button>
+</div>
+</nav>
+
+<main>
+
+<!-- ══════════ HOME ══════════ -->
+<div id="page-home" class="page active">
+
+  <!-- Hero -->
+  <div style="background:linear-gradient(135deg,#1a3a2a 0%,#2d6a4f 55%,#40916c 100%);border-radius:20px;padding:3.5rem 2.5rem 4rem;color:#fff;margin-bottom:2rem;position:relative;overflow:hidden">
+    <div style="position:absolute;right:-40px;bottom:-40px;width:260px;height:260px;border-radius:50%;background:rgba(82,183,136,.1)"></div>
+    <div style="position:absolute;right:80px;top:-30px;width:140px;height:140px;border-radius:50%;background:rgba(82,183,136,.07)"></div>
+    <div style="position:relative;max-width:680px">
+      <div style="display:inline-block;background:rgba(212,160,23,.18);border:1px solid rgba(212,160,23,.4);color:#f4d47a;font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:.35rem .9rem;border-radius:99px;margin-bottom:1.25rem">AI-Powered Agriculture Platform</div>
+      <div style="font-family:'Playfair Display',serif;font-size:2.6rem;font-weight:900;color:#fff;line-height:1.15;margin-bottom:1rem">Crop Yield Prediction<br><span style="color:#b7e4c7">& Pest Monitoring System</span></div>
+      <div style="color:#b7e4c7;font-size:.98rem;font-weight:300;line-height:1.7;margin-bottom:2rem;max-width:480px">Predict crop yield, monitor pest risk, analyze soil health, and access live global weather — all powered by Machine Learning.</div>
+      <div style="display:flex;gap:.85rem;flex-wrap:wrap">
+        <button class="hero-btn hero-btn-main" onclick="goTo('yield')">📈 Predict Yield</button>
+        <button class="hero-btn hero-btn-outline" onclick="goTo('pest')">🪲 Pest Risk</button>
+        <button class="hero-btn hero-btn-outline" onclick="goTo('weather')">🌤️ World Weather</button>
+      </div>
+    </div>
+    <div style="position:absolute;right:2.5rem;bottom:2rem;display:flex;gap:2.5rem">
+      <div style="text-align:center">
+        <div style="font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:900;color:#f4d47a">25+</div>
+        <div style="font-size:.7rem;color:#b7e4c7;text-transform:uppercase;letter-spacing:.06em;margin-top:.1rem">Crops</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:900;color:#f4d47a">80+</div>
+        <div style="font-size:.7rem;color:#b7e4c7;text-transform:uppercase;letter-spacing:.06em;margin-top:.1rem">Cities</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:900;color:#f4d47a">3</div>
+        <div style="font-size:.7rem;color:#b7e4c7;text-transform:uppercase;letter-spacing:.06em;margin-top:.1rem">ML Models</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feature Cards -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.25rem;margin-bottom:2rem">
+    <div style="background:#fff;border-radius:16px;padding:1.5rem;border:1px solid #d4edda;border-top:4px solid #2d6a4f;box-shadow:var(--shadow)">
+      <div style="width:46px;height:46px;background:#e8f5ee;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin-bottom:1rem">📈</div>
+      <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:#1a3a2a;margin-bottom:.4rem">Yield Prediction</div>
+      <div style="font-size:.83rem;color:#6b7c6e;line-height:1.6;margin-bottom:1rem">Random Forest model predicts crop yield (kg/ha) from soil NPK, weather & area with full profit estimation.</div>
+      <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+        <span style="background:#e8f5ee;color:#2d6a4f;font-size:.7rem;font-weight:700;padding:.2rem .65rem;border-radius:99px">Random Forest</span>
+        <span style="background:#e8f5ee;color:#2d6a4f;font-size:.7rem;font-weight:700;padding:.2rem .65rem;border-radius:99px">Regressor</span>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:16px;padding:1.5rem;border:1px solid #fde0dc;border-top:4px solid #c0392b;box-shadow:var(--shadow)">
+      <div style="width:46px;height:46px;background:#fff5f5;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin-bottom:1rem">🪲</div>
+      <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:#1a3a2a;margin-bottom:.4rem">Pest Risk Alert</div>
+      <div style="font-size:.83rem;color:#6b7c6e;line-height:1.6;margin-bottom:1rem">Gradient Boosting predicts Low / Moderate / High pest infestation risk with crop-specific prevention tips.</div>
+      <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+        <span style="background:#fde0dc;color:#8b1a1a;font-size:.7rem;font-weight:700;padding:.2rem .65rem;border-radius:99px">Gradient Boosting</span>
+        <span style="background:#fde0dc;color:#8b1a1a;font-size:.7rem;font-weight:700;padding:.2rem .65rem;border-radius:99px">Classifier</span>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:16px;padding:1.5rem;border:1px solid #ddeeff;border-top:4px solid #1565c0;box-shadow:var(--shadow)">
+      <div style="width:46px;height:46px;background:#e8f4ff;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin-bottom:1rem">🌤️</div>
+      <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:#1a3a2a;margin-bottom:.4rem">Live World Weather</div>
+      <div style="font-size:.83rem;color:#6b7c6e;line-height:1.6;margin-bottom:1rem">Live weather & 5-day forecast for 80+ cities across India, Asia, Europe, Americas & more via OpenWeatherMap.</div>
+      <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+        <span style="background:#e8f4ff;color:#0c447c;font-size:.7rem;font-weight:700;padding:.2rem .65rem;border-radius:99px">OpenWeatherMap</span>
+        <span style="background:#e8f4ff;color:#0c447c;font-size:.7rem;font-weight:700;padding:.2rem .65rem;border-radius:99px">REST API</span>
+      </div>
+    </div>
+    <!-- <div style="background:#fff;border-radius:16px;padding:1.5rem;border:1px solid #fff3cd;border-top:4px solid #d4a017;box-shadow:var(--shadow)">
+      <div style="width:46px;height:46px;background:#fffbef;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin-bottom:1rem">🌱</div>
+      <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:#1a3a2a;margin-bottom:.4rem">Soil Analysis</div>
+      <div style="font-size:.83rem;color:#6b7c6e;line-height:1.6;margin-bottom:1rem">Analyzes NPK & pH, scores soil health 0–100 and recommends specific fertilizers to improve crop yield.</div>
+      <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+        <span style="background:#fffbef;color:#7a5000;font-size:.7rem;font-weight:700;padding:.2rem .65rem;border-radius:99px">Rule-based</span>
+        <span style="background:#fffbef;color:#7a5000;font-size:.7rem;font-weight:700;padding:.2rem .65rem;border-radius:99px">Scoring Engine</span>
+      </div> -->
+    </div>
+  </div>
+
+  <!-- How It Works + Tech Stack -->
+  <div style="display:grid;grid-template-columns:1.1fr 1fr;gap:1.25rem;margin-bottom:2rem">
+    <div style="background:#1a3a2a;border-radius:16px;padding:1.75rem;color:#fff">
+      <div style="font-family:'Playfair Display',serif;font-size:1.05rem;color:#b7e4c7;margin-bottom:1.25rem">⚙️ How It Works</div>
+      <div style="display:flex;flex-direction:column;gap:1rem">
+        <div style="display:flex;align-items:flex-start;gap:.85rem">
+          <div style="min-width:30px;height:30px;background:#2d6a4f;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:700;color:#b7e4c7;flex-shrink:0">1</div>
+          <div><div style="font-weight:600;font-size:.9rem;color:#fff;margin-bottom:.2rem">Enter Farm Parameters</div><div style="font-size:.8rem;color:#b7e4c7;line-height:1.5">Input soil NPK, pH, temperature, humidity, rainfall, farm area and season.</div></div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:.85rem">
+          <div style="min-width:30px;height:30px;background:#2d6a4f;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:700;color:#b7e4c7;flex-shrink:0">2</div>
+          <div><div style="font-weight:600;font-size:.9rem;color:#fff;margin-bottom:.2rem">ML Model Processes Data</div><div style="font-size:.8rem;color:#b7e4c7;line-height:1.5">Random Forest & Gradient Boosting models analyze inputs and generate predictions.</div></div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:.85rem">
+          <div style="min-width:30px;height:30px;background:#2d6a4f;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:700;color:#b7e4c7;flex-shrink:0">3</div>
+          <div><div style="font-weight:600;font-size:.9rem;color:#fff;margin-bottom:.2rem">Get Actionable Results</div><div style="font-size:.8rem;color:#b7e4c7;line-height:1.5">View predicted yield, profit estimate, soil health score and fertilizer recommendations.</div></div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:.85rem">
+          <div style="min-width:30px;height:30px;background:#2d6a4f;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:700;color:#b7e4c7;flex-shrink:0">4</div>
+          <div><div style="font-weight:600;font-size:.9rem;color:#fff;margin-bottom:.2rem">Plan & Act</div><div style="font-size:.8rem;color:#b7e4c7;line-height:1.5">Use pest alerts and live weather to schedule irrigation, spraying, and harvesting.</div></div>
+        </div>
+      </div>
+    </div>
+    <!-- <div style="background:#fff;border-radius:16px;padding:1.75rem;border:1px solid var(--border)">
+      <div style="font-family:'Playfair Display',serif;font-size:1.05rem;color:#1a3a2a;margin-bottom:1.25rem">🛠️ Tech Stack</div>
+      <div style="display:flex;flex-direction:column;gap:.7rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .8rem;background:#f8faf9;border-radius:8px"><span style="font-size:.85rem;font-weight:600;color:#1a3a2a">Backend</span><span style="font-size:.8rem;color:#2d6a4f;font-weight:600">Python · Flask</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .8rem;background:#f8faf9;border-radius:8px"><span style="font-size:.85rem;font-weight:600;color:#1a3a2a">ML Library</span><span style="font-size:.8rem;color:#2d6a4f;font-weight:600">Scikit-learn · Joblib</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .8rem;background:#f8faf9;border-radius:8px"><span style="font-size:.85rem;font-weight:600;color:#1a3a2a">Data Processing</span><span style="font-size:.8rem;color:#2d6a4f;font-weight:600">Pandas · NumPy</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .8rem;background:#f8faf9;border-radius:8px"><span style="font-size:.85rem;font-weight:600;color:#1a3a2a">Weather API</span><span style="font-size:.8rem;color:#2d6a4f;font-weight:600">OpenWeatherMap v2.5</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .8rem;background:#f8faf9;border-radius:8px"><span style="font-size:.85rem;font-weight:600;color:#1a3a2a">Frontend</span><span style="font-size:.8rem;color:#2d6a4f;font-weight:600">HTML · CSS · JavaScript</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .8rem;background:#f8faf9;border-radius:8px"><span style="font-size:.85rem;font-weight:600;color:#1a3a2a">Model Storage</span><span style="font-size:.8rem;color:#2d6a4f;font-weight:600">Joblib .pkl files</span></div>
+      </div>
+    </div>
+  </div> -->
+
+  <!-- Crops Supported -->
+  <div style="background:linear-gradient(135deg,#f0faf4,#e8f5ee);border:1.5px solid #b7e4c7;border-radius:16px;padding:1.5rem;margin-bottom:2rem">
+    <div style="font-family:'Playfair Display',serif;font-size:1rem;color:#1a3a2a;margin-bottom:1rem">🌾 Supported Crops (25)</div>
+    <div style="display:flex;flex-wrap:wrap;gap:.5rem">
+      <span style="background:#fff;color:#2d6a4f;border:1px solid #b7e4c7;font-size:.78rem;font-weight:600;padding:.25rem .7rem;border-radius:99px">Rice</span>
+      <span style="background:#fff;color:#2d6a4f;border:1px solid #b7e4c7;font-size:.78rem;font-weight:600;padding:.25rem .7rem;border-radius:99px">Wheat</span>
+      <span style="background:#fff;color:#2d6a4f;border:1px solid #b7e4c7;font-size:.78rem;font-weight:600;padding:.25rem .7rem;border-radius:99px">Maize</span>
+      <span style="background:#fff;color:#2d6a4f;border:1px solid #b7e4c7;font-size:.78rem;font-weight:600;padding:.25rem .7rem;border-radius:99px">Sugarcane</span>
+      <span style="background:#fff;color:#2d6a4f;border:1px solid #b7e4c7;font-size:.78rem;font-weight:600;padding:.25rem .7rem;border-radius:99px">Cotton</span>
+      <span style="background:#fff;color:#2d6a4f;border:1px solid #b7e4c7;font-size:.78rem;font-weight:600;padding:.25rem .7rem;border-radius:99px">Groundnut</span>
+      <span style="background:#fff;color:#2d6a4f;border:1px solid #b7e4c7;font-size:.78rem;font-weight:600;padding:.25rem .7rem;border-radius:99px">Jute</span>
+      <span style="background:#fff;color:#2d6a4f;border:1px solid #b7e4c7;font-size:.78rem;font-weight:600;padding:.25rem .7rem;border-radius:99px">Coffee</span>
+      <span style="background:#fff;color:#2d6a4f;border:1px solid #b7e4c7;font-size:.78rem;font-weight:600;padding:.25rem .7rem;border-radius:99px">Chickpea</span>
+      <span style="background:#fff;color:#2d6a4f;border:1px solid #b7e4c7;font-size:.78rem;font-weight:600;padding:.25rem .7rem;border-radius:99px">Kidney Beans</span>
+      <span style="background:#fff;color:#2d6a4f;border:1px solid #b7e4c7;font-size:.78rem;font-weight:600;padding:.25rem .7rem;border-radius:99px">Pigeon Peas</span>
+      <span style="background:#fff;color:#2d6a4f;border:1px solid #b7e4c7;font-size:.78rem;font-weight:600;padding:.25rem .7rem;border-radius:99px">Moth Beans</span>
+      <span style="background:#fff;color:#2d6a4f;border:1px solid #b7e4c7;font-size:.78rem;font-weight:600;padding:.25rem .7rem;border-radius:99px">Mung Bean</span>
+      <span style="background:#fff;color:#2d6a4f;border:1px solid #b7e4c7;font-size:.78rem;font-weight:600;padding:.25rem .7rem;border-radius:99px">Black Gram</span>
+      <span style="background:#fff;color:#2d6a4f;border:1px solid #b7e4c7;font-size:.78rem;font-weight:600;padding:.25rem .7rem;border-radius:99px">Lentil</span>
+      <span style="background:#fff;color:#2d6a4f;border:1px solid #b7e4c7;font-size:.78rem;font-weight:600;padding:.25rem .7rem;border-radius:99px">Pomegranate</span>
+      <span style="background:#fff;color:#2d6a4f;border:1px solid #b7e4c7;font-size:.78rem;font-weight:600;padding:.25rem .7rem;border-radius:99px">Banana</span>
+      <span style="background:#fff;color:#2d6a4f;border:1px solid #b7e4c7;font-size:.78rem;font-weight:600;padding:.25rem .7rem;border-radius:99px">Mango</span>
+      <span style="background:#fff;color:#2d6a4f;border:1px solid #b7e4c7;font-size:.78rem;font-weight:600;padding:.25rem .7rem;border-radius:99px">Grapes</span>
+      <span style="background:#fff;color:#2d6a4f;border:1px solid #b7e4c7;font-size:.78rem;font-weight:600;padding:.25rem .7rem;border-radius:99px">Watermelon</span>
+      <span style="background:#fff;color:#2d6a4f;border:1px solid #b7e4c7;font-size:.78rem;font-weight:600;padding:.25rem .7rem;border-radius:99px">Muskmelon</span>
+      <span style="background:#fff;color:#2d6a4f;border:1px solid #b7e4c7;font-size:.78rem;font-weight:600;padding:.25rem .7rem;border-radius:99px">Apple</span>
+      <span style="background:#fff;color:#2d6a4f;border:1px solid #b7e4c7;font-size:.78rem;font-weight:600;padding:.25rem .7rem;border-radius:99px">Orange</span>
+      <span style="background:#fff;color:#2d6a4f;border:1px solid #b7e4c7;font-size:.78rem;font-weight:600;padding:.25rem .7rem;border-radius:99px">Papaya</span>
+      <span style="background:#fff;color:#2d6a4f;border:1px solid #b7e4c7;font-size:.78rem;font-weight:600;padding:.25rem .7rem;border-radius:99px">Coconut</span>
+    </div>
+  </div>
+
+  <!-- Train Card -->
+  <!-- <div class="card">
+    <div class="card-title">⚡ Quick Start — Train Models</div>
+    <p style="font-size:.88rem;color:var(--text-muted);margin-bottom:1rem">Before using predictions, click below to train all 3 ML models on sample data. Takes about 10–15 seconds.</p>
+    <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+      <button class="btn btn-gold" onclick="trainModels()" id="train-btn">🔧 Train All Models</button>
+      <div style="font-size:.82rem;color:var(--text-muted)">Models are saved as <code>.pkl</code> files and auto-loaded on next startup</div>
+    </div>
+    <div id="train-result" class="result-panel" style="margin-top:1rem"></div>
+  </div> -->
+
+</div>
+
+<!-- ══════════ YIELD ══════════ -->
+<div id="page-yield" class="page">
+  <div class="page-header">
+    <div class="page-title">📈 Crop Yield Prediction</div>
+    <div class="page-sub">Enter soil nutrients, weather conditions, and farm details to predict expected yield.</div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">🌿 Soil & Crop Details</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Crop Name</label>
+          <select id="y-crop">
+            <option>rice</option><option>wheat</option><option>maize</option>
+            <option>sugarcane</option><option>cotton</option><option>groundnut</option>
+            <option>chickpea</option><option>banana</option><option>mango</option>
+            <option>grapes</option><option>coconut</option><option>jute</option><option>coffee</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Season</label>
+          <select id="y-season">
+            <option>Kharif</option><option>Rabi</option><option>Zaid</option><option>Whole Year</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Nitrogen N (kg/ha)</label><input type="number" id="y-n" value="90" min="0" max="200"></div>
+        <div class="form-group"><label>Phosphorus P (kg/ha)</label><input type="number" id="y-p" value="42" min="0" max="150"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Potassium K (kg/ha)</label><input type="number" id="y-k" value="43" min="0" max="250"></div>
+        <div class="form-group"><label>Soil pH</label><input type="number" id="y-ph" value="6.5" min="0" max="14" step="0.1"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Temperature (°C)</label><input type="number" id="y-temp" value="25" min="-10" max="60" step="0.1"></div>
+        <div class="form-group"><label>Humidity (%)</label><input type="number" id="y-humidity" value="72" min="0" max="100"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Rainfall (mm)</label><input type="number" id="y-rainfall" value="200" min="0" max="5000"></div>
+        <div class="form-group"><label>Farm Area (hectares)</label><input type="number" id="y-area" value="2.5" min="0.1" step="0.1"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Market Price ₹/kg — optional</label><input type="number" id="y-price" placeholder="Leave blank for default"></div>
+      </div>
+      <button class="btn btn-primary" style="width:100%;margin-top:.5rem" onclick="predictYield()" id="yield-btn">📊 Predict Yield</button>
+    </div>
+    <div><div id="yield-result" class="result-panel"></div></div>
+  </div>
+</div>
+
+<!-- ══════════ PEST ══════════ -->
+<div id="page-pest" class="page">
+  <div class="page-header">
+    <div class="page-title">🪲 Pest Risk Monitoring</div>
+    <div class="page-sub">Predict pest infestation risk based on weather, crop age, and infestation history.</div>
+  </div>
+
+  <!-- Pest Reference Gallery -->
+  <div class="card" style="margin-bottom:1.5rem">
+    <div class="card-title">🦗 Common Crop Pests — Reference Guide</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:1rem">
+
+      <div style="background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden;text-align:center;box-shadow:var(--shadow)">
+        <img src="images/nilaparvata_lugens.jpg"
+             onerror="this.src='https://placehold.co/320x180/e8f5ee/2d6a4f?text=Brown+Planthopper'"
+             style="width:100%;height:110px;object-fit:cover" alt="Brown Planthopper">
+        <div style="padding:.65rem .5rem">
+          <div style="font-weight:700;font-size:.82rem;color:#1a3a2a">Brown Planthopper</div>
+          <div style="font-size:.72rem;color:#6b7c6e;margin:.2rem 0">Affects: Rice</div>
+          <span style="background:#fde0dc;color:#8b1a1a;font-size:.68rem;font-weight:700;padding:.15rem .55rem;border-radius:99px">High Risk</span>
+        </div>
+      </div>
+
+      <div style="background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden;text-align:center;box-shadow:var(--shadow)">
+        <img src="images/spodoptera_frugiperda.jpg"
+             onerror="this.src='https://placehold.co/320x180/fde0dc/8b1a1a?text=Fall+Army+Worm'"
+             style="width:100%;height:110px;object-fit:cover" alt="Fall Army Worm">
+        <div style="padding:.65rem .5rem">
+          <div style="font-weight:700;font-size:.82rem;color:#1a3a2a">Fall Army Worm</div>
+          <div style="font-size:.72rem;color:#6b7c6e;margin:.2rem 0">Affects: Maize</div>
+          <span style="background:#fde0dc;color:#8b1a1a;font-size:.68rem;font-weight:700;padding:.15rem .55rem;border-radius:99px">High Risk</span>
+        </div>
+      </div>
+
+      <div style="background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden;text-align:center;box-shadow:var(--shadow)">
+        <img src="images/aphis_gossypii.jpg"
+             onerror="this.src='https://placehold.co/320x180/ffe8cc/a05000?text=Aphid'"
+             style="width:100%;height:110px;object-fit:cover" alt="Aphid">
+        <div style="padding:.65rem .5rem">
+          <div style="font-weight:700;font-size:.82rem;color:#1a3a2a">Aphid</div>
+          <div style="font-size:.72rem;color:#6b7c6e;margin:.2rem 0">Affects: Wheat, Cotton</div>
+          <span style="background:#ffe8cc;color:#a05000;font-size:.68rem;font-weight:700;padding:.15rem .55rem;border-radius:99px">Moderate</span>
+        </div>
+      </div>
+
+      <div style="background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden;text-align:center;box-shadow:var(--shadow)">
+        <img src="images/bemisia_tabaci.jpg"
+             onerror="this.src='https://placehold.co/320x180/ffe8cc/a05000?text=Whitefly'"
+             style="width:100%;height:110px;object-fit:cover" alt="Whitefly">
+        <div style="padding:.65rem .5rem">
+          <div style="font-weight:700;font-size:.82rem;color:#1a3a2a">Whitefly</div>
+          <div style="font-size:.72rem;color:#6b7c6e;margin:.2rem 0">Affects: Cotton</div>
+          <span style="background:#ffe8cc;color:#a05000;font-size:.68rem;font-weight:700;padding:.15rem .55rem;border-radius:99px">Moderate</span>
+        </div>
+      </div>
+
+      <div style="background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden;text-align:center;box-shadow:var(--shadow)">
+        <img src="images/helicoverpa_armigera.jpg"
+             onerror="this.src='https://placehold.co/320x180/fde0dc/8b1a1a?text=Bollworm'"
+             style="width:100%;height:110px;object-fit:cover" alt="Bollworm">
+        <div style="padding:.65rem .5rem">
+          <div style="font-weight:700;font-size:.82rem;color:#1a3a2a">Bollworm</div>
+          <div style="font-size:.72rem;color:#6b7c6e;margin:.2rem 0">Affects: Cotton</div>
+          <span style="background:#fde0dc;color:#8b1a1a;font-size:.68rem;font-weight:700;padding:.15rem .55rem;border-radius:99px">High Risk</span>
+        </div>
+      </div>
+
+      <div style="background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden;text-align:center;box-shadow:var(--shadow)">
+        <img src="images/puccinia_striiformis.jpg"
+             onerror="this.src='https://placehold.co/320x180/ffe8cc/a05000?text=Rust+Fungus'"
+             style="width:100%;height:110px;object-fit:cover" alt="Rust Fungus">
+        <div style="padding:.65rem .5rem">
+          <div style="font-weight:700;font-size:.82rem;color:#1a3a2a">Rust Fungus</div>
+          <div style="font-size:.72rem;color:#6b7c6e;margin:.2rem 0">Affects: Wheat</div>
+          <span style="background:#ffe8cc;color:#a05000;font-size:.68rem;font-weight:700;padding:.15rem .55rem;border-radius:99px">Moderate</span>
+        </div>
+      </div>
+
+      <div style="background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden;text-align:center;box-shadow:var(--shadow)">
+        <img src="images/spider_mites.jpg"
+             onerror="this.src='https://placehold.co/320x180/d4edda/1a5c38?text=Spider+Mites'"
+             style="width:100%;height:110px;object-fit:cover" alt="Spider Mites">
+        <div style="padding:.65rem .5rem">
+          <div style="font-weight:700;font-size:.82rem;color:#1a3a2a">Spider Mites</div>
+          <div style="font-size:.72rem;color:#6b7c6e;margin:.2rem 0">Affects: All Crops</div>
+          <span style="background:#d4edda;color:#1a5c38;font-size:.68rem;font-weight:700;padding:.15rem .55rem;border-radius:99px">Low Risk</span>
+        </div>
+      </div>
+
+      <div style="background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden;text-align:center;box-shadow:var(--shadow)">
+        <img src="images/stem_borer.jpg"
+             onerror="this.src='https://placehold.co/320x180/fde0dc/8b1a1a?text=Stem+Borer'"
+             style="width:100%;height:110px;object-fit:cover" alt="Stem Borer">
+        <div style="padding:.65rem .5rem">
+          <div style="font-weight:700;font-size:.82rem;color:#1a3a2a">Stem Borer</div>
+          <div style="font-size:.72rem;color:#6b7c6e;margin:.2rem 0">Affects: Rice, Maize</div>
+          <span style="background:#fde0dc;color:#8b1a1a;font-size:.68rem;font-weight:700;padding:.15rem .55rem;border-radius:99px">High Risk</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Prediction Form -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">🌦️ Environmental Conditions</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Crop</label>
+          <select id="p-crop" onchange="updatePestPreview()">
+            <option>rice</option><option>wheat</option><option>maize</option>
+            <option>cotton</option><option>sugarcane</option><option>other</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Temperature (°C)</label><input type="number" id="p-temp" value="30" min="-10" max="60" step="0.1"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Humidity (%)</label><input type="number" id="p-humidity" value="78" min="0" max="100"></div>
+        <div class="form-group"><label>Rainfall (mm)</label><input type="number" id="p-rainfall" value="60" min="0" max="1000"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Wind Speed (km/h)</label><input type="number" id="p-wind" value="8" min="0" max="100"></div>
+        <div class="form-group"><label>Crop Age (days)</label><input type="number" id="p-age" value="45" min="0" max="365"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:1rem">
+        <label>Previous Infestation?</label>
+        <select id="p-prev"><option value="0">No</option><option value="1">Yes</option></select>
+      </div>
+
+      <!-- Dynamic pest preview -->
+      <div style="background:#f8faf9;border-radius:10px;padding:1rem;margin-bottom:1rem;border:1px solid var(--border)">
+        <div style="font-size:.8rem;font-weight:700;color:#1a3a2a;margin-bottom:.75rem">⚠️ Common Pests for Selected Crop:</div>
+        <div id="crop-pest-list" style="display:flex;gap:.6rem;flex-wrap:wrap"></div>
+      </div>
+
+      <button class="btn btn-primary" style="width:100%" onclick="predictPest()" id="pest-btn">🔍 Assess Pest Risk</button>
+    </div>
+    <div id="pest-result" class="result-panel"></div>
+  </div>
+</div>
+
+<!-- ══════════ WEATHER ══════════ -->
+<div id="page-weather" class="page">
+  <div class="page-header">
+    <div class="page-title">🌤️ World Weather Intelligence</div>
+    <div class="page-sub">Live accurate weather for any city worldwide — search or browse by region.</div>
+  </div>
+  <div class="card" style="margin-bottom:1.5rem">
+    <div class="card-title">🔍 Search Any City</div>
+    <div style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap">
+      <div class="form-group" style="flex:1;min-width:220px">
+        <label>City Name</label>
+        <input type="text" id="w-city" value="Kolkata"
+               placeholder="e.g. Tokyo, London, New York, Dubai"
+               onkeydown="if(event.key==='Enter') fetchWeather()">
+      </div>
+      <button class="btn btn-primary" onclick="fetchWeather()" id="weather-btn">🔍 Get Weather</button>
+    </div>
+  </div>
+  <div id="weather-result" class="result-panel" style="margin-bottom:1.5rem"></div>
+  <div class="card">
+    <div class="card-title">🌍 Browse Weather by Region</div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.5rem">
+      <button class="region-btn active" onclick="loadRegion('India',this)">🇮🇳 India</button>
+      <button class="region-btn" onclick="loadRegion('Asia',this)">🌏 Asia</button>
+      <button class="region-btn" onclick="loadRegion('Europe',this)">🌍 Europe</button>
+      <button class="region-btn" onclick="loadRegion('Americas',this)">🌎 Americas</button>
+      <button class="region-btn" onclick="loadRegion('Middle East & Africa',this)">🌍 Mid East & Africa</button>
+      <button class="region-btn" onclick="loadRegion('Oceania',this)">🌊 Oceania</button>
+    </div>
+    <div class="region-loading" id="region-loading">
+      <div class="rl-spinner"></div>
+      Fetching live weather data...
+    </div>
+    <div class="world-city-grid" id="region-grid"></div>
+  </div>
+</div>
+
+ <!-- ══════════ CONTACT ══════════ -->
+<div id="page-contact" class="page">
+  <div class="page-header">
+    <div class="page-title">📬 Contact Us</div>
+    <div class="page-sub">Get in touch with the AgroSense development team.</div>
+  </div>
+
+  <!-- Team Cards -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;margin-bottom:2rem">
+
+    <!-- Card 1 -->
+    <div style="background:#fff;border-radius:16px;padding:1.75rem;border:1px solid var(--border);border-top:4px solid #2d6a4f;box-shadow:var(--shadow)">
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem">
+        <div style="width:52px;height:52px;background:linear-gradient(135deg,#2d6a4f,#52b788);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:#fff;font-weight:700;font-family:'Playfair Display',serif">A</div>
+        <div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:#1a3a2a">Anubhab Panda</div>
+          <div style="font-size:.8rem;color:#6b7c6e;margin-top:.15rem">Developer · AgroSense Team</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:.75rem">
+        <a href="mailto:anubhabpanda018@gmail.com" style="display:flex;align-items:center;gap:.75rem;padding:.65rem .9rem;background:#f0f7f2;border-radius:10px;text-decoration:none;border:1px solid #e0ece4;transition:all .2s" onmouseover="this.style.background='#e8f5ee'" onmouseout="this.style.background='#f0f7f2'">
+          <span style="font-size:1.1rem">📧</span>
+          <div>
+            <div style="font-size:.72rem;font-weight:700;color:#6b7c6e;text-transform:uppercase;letter-spacing:.05em">Email</div>
+            <div style="font-size:.85rem;color:#2d6a4f;font-weight:600">anubhabpanda018@gmail.com</div>
+          </div>
+        </a>
+        <a href="https://www.linkedin.com/in/anubhab-panda" target="_blank" style="display:flex;align-items:center;gap:.75rem;padding:.65rem .9rem;background:#f0f4ff;border-radius:10px;text-decoration:none;border:1px solid #ddeeff;transition:all .2s" onmouseover="this.style.background='#e0eaff'" onmouseout="this.style.background='#f0f4ff'">
+          <span style="font-size:1.1rem">💼</span>
+          <div>
+            <div style="font-size:.72rem;font-weight:700;color:#6b7c6e;text-transform:uppercase;letter-spacing:.05em">LinkedIn</div>
+            <div style="font-size:.85rem;color:#1565c0;font-weight:600">Anubhab Panda</div>
+          </div>
+        </a>
+        <div style="display:flex;align-items:center;gap:.75rem;padding:.65rem .9rem;background:#fffbef;border-radius:10px;border:1px solid #f0d87a">
+          <span style="font-size:1.1rem">📱</span>
+          <div>
+            <div style="font-size:.72rem;font-weight:700;color:#6b7c6e;text-transform:uppercase;letter-spacing:.05em">Mobile</div>
+            <div style="font-size:.85rem;color:#7a5000;font-weight:600">+91 6372534280</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2 -->
+    <div style="background:#fff;border-radius:16px;padding:1.75rem;border:1px solid var(--border);border-top:4px solid #c0392b;box-shadow:var(--shadow)">
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem">
+        <div style="width:52px;height:52px;background:linear-gradient(135deg,#c0392b,#e74c3c);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:#fff;font-weight:700;font-family:'Playfair Display',serif">S</div>
+        <div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:#1a3a2a">Sanat Meher</div>
+          <div style="font-size:.8rem;color:#6b7c6e;margin-top:.15rem">Developer · AgroSense Team</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:.75rem">
+        <a href="mailto:santa.meher007@gmail.com" style="display:flex;align-items:center;gap:.75rem;padding:.65rem .9rem;background:#f0f7f2;border-radius:10px;text-decoration:none;border:1px solid #e0ece4;transition:all .2s" onmouseover="this.style.background='#e8f5ee'" onmouseout="this.style.background='#f0f7f2'">
+          <span style="font-size:1.1rem">📧</span>
+          <div>
+            <div style="font-size:.72rem;font-weight:700;color:#6b7c6e;text-transform:uppercase;letter-spacing:.05em">Email</div>
+            <div style="font-size:.85rem;color:#2d6a4f;font-weight:600">santa.meher007@gmail.com</div>
+          </div>
+        </a>
+        <a href="https://www.linkedin.com/in/sanat-meher" target="_blank" style="display:flex;align-items:center;gap:.75rem;padding:.65rem .9rem;background:#f0f4ff;border-radius:10px;text-decoration:none;border:1px solid #ddeeff;transition:all .2s" onmouseover="this.style.background='#e0eaff'" onmouseout="this.style.background='#f0f4ff'">
+          <span style="font-size:1.1rem">💼</span>
+          <div>
+            <div style="font-size:.72rem;font-weight:700;color:#6b7c6e;text-transform:uppercase;letter-spacing:.05em">LinkedIn</div>
+            <div style="font-size:.85rem;color:#1565c0;font-weight:600">Sanat Meher</div>
+          </div>
+        </a>
+        <div style="display:flex;align-items:center;gap:.75rem;padding:.65rem .9rem;background:#fffbef;border-radius:10px;border:1px solid #f0d87a">
+          <span style="font-size:1.1rem">📱</span>
+          <div>
+            <div style="font-size:.72rem;font-weight:700;color:#6b7c6e;text-transform:uppercase;letter-spacing:.05em">Mobile</div>
+            <div style="font-size:.85rem;color:#7a5000;font-weight:600">+91 7848977353</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 3 -->
+    <div style="background:#fff;border-radius:16px;padding:1.75rem;border:1px solid var(--border);border-top:4px solid #1565c0;box-shadow:var(--shadow)">
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem">
+        <div style="width:52px;height:52px;background:linear-gradient(135deg,#1565c0,#1976d2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:#fff;font-weight:700;font-family:'Playfair Display',serif">S</div>
+        <div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:#1a3a2a">Sitej Kumar Meher</div>
+          <div style="font-size:.8rem;color:#6b7c6e;margin-top:.15rem">Developer · AgroSense Team</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:.75rem">
+        <a href="mailto:ommkumarmeher@gmail.com" style="display:flex;align-items:center;gap:.75rem;padding:.65rem .9rem;background:#f0f7f2;border-radius:10px;text-decoration:none;border:1px solid #e0ece4;transition:all .2s" onmouseover="this.style.background='#e8f5ee'" onmouseout="this.style.background='#f0f7f2'">
+          <span style="font-size:1.1rem">📧</span>
+          <div>
+            <div style="font-size:.72rem;font-weight:700;color:#6b7c6e;text-transform:uppercase;letter-spacing:.05em">Email</div>
+            <div style="font-size:.85rem;color:#2d6a4f;font-weight:600">ommkumarmeher@gmail.com</div>
+          </div>
+        </a>
+        <a href="https://www.linkedin.com/in/sitej-kumar-meher" target="_blank" style="display:flex;align-items:center;gap:.75rem;padding:.65rem .9rem;background:#f0f4ff;border-radius:10px;text-decoration:none;border:1px solid #ddeeff;transition:all .2s" onmouseover="this.style.background='#e0eaff'" onmouseout="this.style.background='#f0f4ff'">
+          <span style="font-size:1.1rem">💼</span>
+          <div>
+            <div style="font-size:.72rem;font-weight:700;color:#6b7c6e;text-transform:uppercase;letter-spacing:.05em">LinkedIn</div>
+            <div style="font-size:.85rem;color:#1565c0;font-weight:600">Sitej Kumar Meher</div>
+          </div>
+        </a>
+        <div style="display:flex;align-items:center;gap:.75rem;padding:.65rem .9rem;background:#fffbef;border-radius:10px;border:1px solid #f0d87a">
+          <span style="font-size:1.1rem">📱</span>
+          <div>
+            <div style="font-size:.72rem;font-weight:700;color:#6b7c6e;text-transform:uppercase;letter-spacing:.05em">Mobile</div>
+            <div style="font-size:.85rem;color:#7a5000;font-weight:600">+91 7978736548</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ══════════ FOOTER ══════════ -->
+<footer style="background:#1a3a2a;margin-top:3rem;padding:2rem;text-align:center;border-top:3px solid #2d6a4f">
+  <div style="max-width:1300px;margin:0 auto">
+    <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:#f4d47a;margin-bottom:.4rem">🌾 AgroSense</div>
+    <div style="font-size:.85rem;color:#b7e4c7;margin-bottom:.75rem">Crop Yield Prediction & Pest Monitoring System</div>
+    <div style="display:flex;justify-content:center;gap:2rem;flex-wrap:wrap;margin-bottom:.75rem">
+      <a href="mailto:anubhabpanda018@gmail.com" style="font-size:.8rem;color:#52b788;text-decoration:none">📧 anubhabpanda018@gmail.com</a>
+      <a href="mailto:santa.meher007@gmail.com"   style="font-size:.8rem;color:#52b788;text-decoration:none">📧 santa.meher007@gmail.com</a>
+      <a href="mailto:ommkumarmeher@gmail.com"    style="font-size:.8rem;color:#52b788;text-decoration:none">📧 sitejmeher18@gmail.com</a>
+    </div>
+    <div style="font-size:.78rem;color:#6b7c6e">
+      Built with Python · Flask · Scikit-learn · OpenWeatherMap  ·
+      <span style="color:#52b788;cursor:pointer" onclick="goTo('contact')">Contact Us</span>
+    </div>
+  </div>
+</footer>
+
+
+</main>
+
+<script>
+const API = '';
+
+// ── Navigation ───────────────────────────────────────────────────────────────
+function goTo(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  const pages = ['home','yield','pest','weather','contact'];
+  document.querySelectorAll('.nav-tab')[pages.indexOf(page)].classList.add('active');
+  if (page === 'weather' && document.getElementById('region-grid').innerHTML === '') {
+    loadRegion('India', document.querySelector('.region-btn'));
+  }
+}
+
+// ── API ───────────────────────────────────────────────────────────────────────
+async function callAPI(method, url, body = null) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  return (await fetch(API + url, opts)).json();
+}
+function setLoading(id, text = 'Loading...') {
+  const b = document.getElementById(id);
+  b.disabled = true;
+  b.innerHTML = `<span class="loader"></span>${text}`;
+}
+function resetBtn(id, label) {
+  const b = document.getElementById(id);
+  b.disabled = false;
+  b.innerHTML = label;
+}
+function showResult(id, html, isError = false) {
+  const p = document.getElementById(id);
+  p.innerHTML = html;
+  p.className = 'result-panel visible' + (isError ? ' error-panel' : '');
+}
+
+// ── Train ─────────────────────────────────────────────────────────────────────
+async function trainModels() {
+  const btn = document.getElementById('train-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loader"></span>Training models...';
+  try {
+    const res = await callAPI('POST', '/api/predict/train');
+    const el  = document.getElementById('train-result');
+    if (res.status === 'success') {
+      const d = res.data;
+      el.innerHTML = `
+        <div style="color:var(--green-mid);font-weight:700;margin-bottom:.75rem">✅ All models trained successfully!</div>
+        <div class="grid-3">
+          <div class="stat-box"><div class="stat-label">Yield R²</div><div class="stat-value">${d.yield_model.r2_score}</div></div>
+          <div class="stat-box"><div class="stat-label">Recommender Acc</div><div class="stat-value">${d.crop_recommender.accuracy_pct}<span class="stat-unit">%</span></div></div>
+          <div class="stat-box"><div class="stat-label">Pest Model</div><div class="stat-value" style="font-size:1rem;padding-top:.4rem">✅ Ready</div></div>
+        </div>`;
+    } else {
+      el.innerHTML = `<span style="color:var(--red)">❌ ${res.message}</span>`;
+    }
+    el.classList.add('visible');
+  } catch(e) {
+    const el = document.getElementById('train-result');
+    el.innerHTML = `<span style="color:var(--red)">❌ Server not reachable.</span>`;
+    el.classList.add('visible');
+  }
+  btn.disabled = false;
+  btn.innerHTML = '🔧 Train All Models';
+}
+
+// ── Yield ─────────────────────────────────────────────────────────────────────
+async function predictYield() {
+  setLoading('yield-btn', 'Predicting...');
+  const body = {
+    crop: document.getElementById('y-crop').value,
+    season: document.getElementById('y-season').value,
+    N: +document.getElementById('y-n').value,
+    P: +document.getElementById('y-p').value,
+    K: +document.getElementById('y-k').value,
+    ph: +document.getElementById('y-ph').value,
+    temperature: +document.getElementById('y-temp').value,
+    humidity: +document.getElementById('y-humidity').value,
+    rainfall: +document.getElementById('y-rainfall').value,
+    area: +document.getElementById('y-area').value,
+  };
+  const pv = document.getElementById('y-price').value;
+  if (pv) body.price_per_kg = +pv;
+  try {
+    const res = await callAPI('POST', '/api/predict/yield', body);
+    if (res.status === 'success') {
+      const d = res.data, p = d.profit_estimate, s = d.soil_analysis;
+      const impactHTML = Object.entries(d.feature_impact).sort((a,b)=>b[1]-a[1])
+        .map(([k,v])=>`
+          <div class="impact-row">
+            <span class="impact-name">${k}</span>
+            <div class="impact-bar-wrap"><div class="impact-bar" style="width:${(v*100).toFixed(1)}%"></div></div>
+            <span class="impact-pct">${(v*100).toFixed(1)}%</span>
+          </div>`).join('');
+      const soilRecs = s.recommendations.map(r=>`
+        <div class="fert-card">
+          <div class="fert-issue">⚠️ ${r.issue}</div>
+          <div class="fert-name">💊 ${r.fertilizer}</div>
+          <div class="fert-method">📋 ${r.method}</div>
+        </div>`).join('');
+      showResult('yield-result',`
+        <div style="font-weight:700;color:var(--green-deep);margin-bottom:1rem">✅ Yield Prediction Complete</div>
+        <div class="grid-2" style="margin-bottom:1rem">
+          <div class="stat-box"><div class="stat-label">Yield per Hectare</div><div class="stat-value">${d.predicted_yield_kg_per_ha.toLocaleString()}</div><div class="stat-unit">kg / ha</div></div>
+          <div class="stat-box"><div class="stat-label">Total Farm Yield</div><div class="stat-value">${d.total_estimated_yield_kg.toLocaleString()}</div><div class="stat-unit">kg</div></div>
+        </div>
+        <div class="card-title" style="font-size:.95rem;margin-bottom:.75rem">💰 Profit Estimate</div>
+        <div class="grid-2" style="margin-bottom:1rem">
+          <div class="stat-box"><div class="stat-label">Gross Revenue</div><div class="stat-value" style="font-size:1.5rem">₹${p.gross_revenue_inr.toLocaleString()}</div></div>
+          <div class="stat-box"><div class="stat-label">Net Profit</div>
+            <div class="stat-value ${p.profitable?'profit-positive':'profit-negative'}" style="font-size:1.5rem">
+              ${p.profitable?'+':''}₹${p.net_profit_inr.toLocaleString()}
+            </div>
+          </div>
+        </div>
+        <div class="section-sep"></div>
+        <div class="card-title" style="font-size:.95rem;margin-bottom:.75rem">📊 Feature Impact on Yield</div>
+        ${impactHTML}
+        <div class="section-sep"></div>
+        <div class="card-title" style="font-size:.95rem;margin-bottom:.75rem">
+          🌍 Soil Health
+          <span class="badge ${s.health_category==='Excellent'?'badge-green':s.health_category==='Good'?'badge-blue':'badge-orange'}">
+            ${s.health_category} (${s.soil_health_score}/100)
+          </span>
+        </div>
+        ${soilRecs}`);
+    } else { showResult('yield-result',`❌ ${res.message}`,true); }
+  } catch(e) { showResult('yield-result','❌ Server not reachable.',true); }
+  resetBtn('yield-btn','📊 Predict Yield');
+}
+
+// ── Pest ──────────────────────────────────────────────────────────────────────
+async function predictPest() {
+  setLoading('pest-btn','Analyzing...');
+  const body = {
+    crop: document.getElementById('p-crop').value,
+    temperature: +document.getElementById('p-temp').value,
+    humidity: +document.getElementById('p-humidity').value,
+    rainfall: +document.getElementById('p-rainfall').value,
+    wind_speed: +document.getElementById('p-wind').value,
+    crop_age_days: +document.getElementById('p-age').value,
+    previous_infestation: +document.getElementById('p-prev').value,
+  };
+  try {
+    const res = await callAPI('POST','/api/predict/pest',body);
+    if (res.status==='success') {
+      const d=res.data, probs=d.risk_probabilities;
+      const colorMap={Low:'badge-green',Moderate:'badge-orange',High:'badge-red'};
+      const bigColor={Low:'var(--green-mid)',Moderate:'var(--orange)',High:'var(--red)'};
+      const pestList = d.likely_pests.length
+        ? d.likely_pests.map(p=>`<span class="badge badge-orange" style="margin:.2rem">${p}</span>`).join('')
+        : '<span style="color:var(--text-muted);font-size:.85rem">No significant pests expected</span>';
+      const tipsList = d.prevention_tips.map(t=>`<div class="pest-tip"><span>💡</span><span>${t}</span></div>`).join('');
+      showResult('pest-result',`
+        <div style="text-align:center;margin-bottom:1rem">
+          <div style="font-size:.78rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:.08em">Risk Level</div>
+          <div class="big-risk" style="color:${bigColor[d.risk_level]}">${d.risk_level}</div>
+          <span class="badge ${colorMap[d.risk_level]}" style="font-size:.85rem">Pest Infestation Risk</span>
+        </div>
+        <div style="font-size:.78rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.25rem">Risk Distribution</div>
+        <div class="risk-meter">
+          <div class="risk-seg risk-low" style="flex:${probs.Low}"></div>
+          <div class="risk-seg risk-mod" style="flex:${probs.Moderate}"></div>
+          <div class="risk-seg risk-high" style="flex:${probs.High}"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:1rem">
+          <span style="color:var(--green-mid)">🟢 Low ${probs.Low}%</span>
+          <span style="color:var(--orange)">🟡 Mod ${probs.Moderate}%</span>
+          <span style="color:var(--red)">🔴 High ${probs.High}%</span>
+        </div>
+        <div class="section-sep"></div>
+        <div style="font-weight:700;color:var(--green-deep);margin-bottom:.5rem">🦗 Likely Pests</div>
+        <div style="margin-bottom:1rem">${pestList}</div>
+        <div class="section-sep"></div>
+        <div style="font-weight:700;color:var(--green-deep);margin-bottom:.5rem">🛡️ Prevention Tips</div>
+        ${tipsList}`);
+    } else { showResult('pest-result',`❌ ${res.message}`,true); }
+  } catch(e) { showResult('pest-result','❌ Server not reachable.',true); }
+  resetBtn('pest-btn','🔍 Assess Pest Risk');
+}
+
+// ── Crop Pest Preview ─────────────────────────────────────────────────────────
+const CROP_PESTS = {
+  rice:     [
+    { name:"Brown Planthopper", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Nilaparvata_lugens.jpg/120px-Nilaparvata_lugens.jpg" },
+    { name:"Stem Borer",        img:"https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Chilo_suppressalis.jpg/120px-Chilo_suppressalis.jpg" },
+    { name:"Leaf Folder",       img:"https://placehold.co/120x80/e8f5ee/2d6a4f?text=Leaf+Folder" },
+    { name:"Blast Fungus",      img:"https://placehold.co/120x80/e8f5ee/2d6a4f?text=Blast+Fungus" }
+  ],
+  wheat:    [
+    { name:"Aphid",     img:"https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Aphis_gossypii_cotton_aphid.jpg/120px-Aphis_gossypii_cotton_aphid.jpg" },
+    { name:"Rust",      img:"https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/Puccinia_striiformis_on_wheat.jpg/120px-Puccinia_striiformis_on_wheat.jpg" },
+    { name:"Termite",   img:"https://placehold.co/120x80/ffe8cc/a05000?text=Termite" },
+    { name:"Army Worm", img:"https://placehold.co/120x80/ffe8cc/a05000?text=Army+Worm" }
+  ],
+  maize:    [
+    { name:"Fall Army Worm", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Spodoptera_frugiperda_caterpillar.jpg/120px-Spodoptera_frugiperda_caterpillar.jpg" },
+    { name:"Stem Borer",     img:"https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Chilo_suppressalis.jpg/120px-Chilo_suppressalis.jpg" },
+    { name:"Aphid",          img:"https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Aphis_gossypii_cotton_aphid.jpg/120px-Aphis_gossypii_cotton_aphid.jpg" },
+    { name:"Smut",           img:"https://placehold.co/120x80/fde0dc/8b1a1a?text=Smut" }
+  ],
+  cotton:   [
+    { name:"Bollworm", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Helicoverpa_armigera_caterpillar.jpg/120px-Helicoverpa_armigera_caterpillar.jpg" },
+    { name:"Whitefly", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Bemisia_tabaci.jpg/120px-Bemisia_tabaci.jpg" },
+    { name:"Thrips",   img:"https://placehold.co/120x80/fde0dc/8b1a1a?text=Thrips" },
+    { name:"Jassid",   img:"https://placehold.co/120x80/fde0dc/8b1a1a?text=Jassid" }
+  ],
+  sugarcane:[
+    { name:"Pyrilla",      img:"https://placehold.co/120x80/ffe8cc/a05000?text=Pyrilla" },
+    { name:"Top Borer",    img:"https://placehold.co/120x80/ffe8cc/a05000?text=Top+Borer" },
+    { name:"Woolly Aphid", img:"https://placehold.co/120x80/ffe8cc/a05000?text=Woolly+Aphid" },
+    { name:"Mealybug",     img:"https://placehold.co/120x80/ffe8cc/a05000?text=Mealybug" }
+  ],
+  other:    [
+    { name:"Aphid",    img:"https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Aphis_gossypii_cotton_aphid.jpg/120px-Aphis_gossypii_cotton_aphid.jpg" },
+    { name:"Whitefly", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Bemisia_tabaci.jpg/120px-Bemisia_tabaci.jpg" },
+    { name:"Mites",    img:"https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Tetranychus_urticae_with_silk_threads.jpg/120px-Tetranychus_urticae_with_silk_threads.jpg" },
+    { name:"Blight",   img:"https://placehold.co/120x80/d4edda/1a5c38?text=Fungal+Blight" }
+  ]
+};
+
+function updatePestPreview() {
+  const crop  = document.getElementById('p-crop').value;
+  const pests = CROP_PESTS[crop] || CROP_PESTS['other'];
+  document.getElementById('crop-pest-list').innerHTML = pests.map(p => `
+    <div style="text-align:center;width:78px">
+      <img src="${p.img}"
+           onerror="this.src='https://placehold.co/78x55/f8faf9/6b7c6e?text=Pest'"
+           style="width:78px;height:54px;object-fit:cover;border-radius:8px;border:1px solid var(--border)">
+      <div style="font-size:.65rem;color:#1a3a2a;font-weight:600;margin-top:.25rem;line-height:1.2">${p.name}</div>
+    </div>`).join('');
+}
+
+// Run on load
+updatePestPreview();
+
+// ── Single City Weather ───────────────────────────────────────────────────────
+async function fetchWeather() {
+  setLoading('weather-btn','Fetching...');
+  const city = document.getElementById('w-city').value.trim() || 'Kolkata';
+  try {
+    const res = await callAPI('GET', `/api/monitor/weather/${encodeURIComponent(city)}`);
+    if (res.status === 'success') {
+      const c = res.data.current;
+      const forecast = res.data.forecast;
+      if (c.source === 'error') {
+        showResult('weather-result', `❌ ${c.error}`, true);
+        resetBtn('weather-btn','🔍 Get Weather');
+        return;
+      }
+      const sourceNote = c.source === 'simulated'
+        ? `<span class="badge badge-orange">⚠️ Simulated</span>`
+        : `<span class="badge badge-green">🟢 Live Data</span>`;
+      const fcHtml = forecast.length
+        ? forecast.map(f=>`
+            <div class="forecast-card">
+              <div class="fc-date">${formatDate(f.date)}</div>
+              <img src="${f.icon_url}" style="width:44px;height:44px" alt="">
+              <div class="fc-temp">${f.temperature}°C</div>
+              <div class="fc-range">↓${f.temp_min}° ↑${f.temp_max}°</div>
+              <div style="font-size:.72rem;color:var(--text-muted);margin-top:.2rem">${f.description}</div>
+              <div style="font-size:.72rem;color:var(--green-mid);margin-top:.2rem">💧${f.humidity}% 💨${f.wind_speed}m/s</div>
+            </div>`).join('')
+        : `<p style="color:var(--text-muted);font-size:.85rem;grid-column:1/-1"></p>`;
+      showResult('weather-result',`
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem;margin-bottom:1.25rem">
+          <div>
+            <div style="font-family:'Playfair Display',serif;font-size:1.7rem;color:var(--green-deep)">${c.city}, ${c.country}</div>
+            <div style="font-size:.8rem;color:var(--text-muted);margin-top:.2rem">📍 ${c.lat}°, ${c.lon}°</div>
+          </div>
+          ${sourceNote}
+        </div>
+        <div style="display:flex;align-items:center;gap:1.5rem;margin-bottom:1.5rem;flex-wrap:wrap">
+          <img src="${c.icon_url}" style="width:90px;height:90px" alt="${c.description}">
+          <div>
+            <div style="font-family:'Playfair Display',serif;font-size:4rem;color:var(--green-deep);line-height:1">${c.temperature}°C</div>
+            <div style="color:var(--text-muted);font-size:.95rem;margin-top:.3rem">${c.description}</div>
+            <div style="color:var(--text-muted);font-size:.85rem">Feels like ${c.feels_like}°C</div>
+          </div>
+          <div style="margin-left:auto;display:grid;grid-template-columns:1fr 1fr;gap:.6rem;min-width:230px">
+            <div class="stat-box"><div class="stat-label">Humidity</div><div style="font-weight:700;font-size:1.1rem">${c.humidity}%</div></div>
+            <div class="stat-box"><div class="stat-label">Wind</div><div style="font-weight:700;font-size:1.1rem">${c.wind_speed}m/s ${getWindDir(c.wind_deg)}</div></div>
+            <div class="stat-box"><div class="stat-label">Visibility</div><div style="font-weight:700;font-size:1.1rem">${c.visibility} km</div></div>
+            <div class="stat-box"><div class="stat-label">Clouds</div><div style="font-weight:700;font-size:1.1rem">${c.clouds}%</div></div>
+          </div>
+        </div>
+        <div class="section-sep"></div>
+        <div style="font-weight:700;color:var(--green-deep);margin-bottom:.85rem">📅 5-Day Forecast</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.75rem">${fcHtml}</div>`);
+    } else { showResult('weather-result',`❌ ${res.message}`,true); }
+  } catch(e) { showResult('weather-result','❌ Server not reachable.',true); }
+  resetBtn('weather-btn','🔍 Get Weather');
+}
+
+// ── Region Weather ────────────────────────────────────────────────────────────
+async function loadRegion(region, btn) {
+  document.querySelectorAll('.region-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const grid    = document.getElementById('region-grid');
+  const loading = document.getElementById('region-loading');
+  grid.innerHTML = '';
+  loading.style.display = 'block';
+  try {
+    const res = await callAPI('GET', `/api/monitor/weather/region/${encodeURIComponent(region)}`);
+    loading.style.display = 'none';
+    if (res.status === 'success') {
+      const cities = res.data.cities;
+      if (!cities || cities.length === 0) {
+        grid.innerHTML = `
+          <div style="grid-column:1/-1;text-align:center;padding:2.5rem;color:var(--text-muted)">
+            <div style="font-size:2.5rem;margin-bottom:.5rem">🔑</div>
+            <div style="font-weight:700;font-size:1rem;margin-bottom:.4rem">No weather data returned</div>
+            <div style="font-size:.85rem">Add your <strong>OpenWeatherMap API key</strong> in <code>config.py</code> to get live city weather.</div>
+          </div>`;
+        return;
+      }
+      grid.innerHTML = cities.map(c => {
+        if (c.source === 'error') return `
+          <div class="city-card" style="background:#fff5f5;border-color:#fcc">
+            <div class="city-name">${c.city}</div>
+            <div style="color:var(--red);font-size:.82rem;margin-top:.4rem">Not found</div>
+          </div>`;
+        return `
+          <div class="city-card" onclick="searchCity('${c.city}')">
+            <div class="city-name">${c.city}</div>
+            <div class="city-country">${c.country}</div>
+            <div style="display:flex;align-items:center;gap:.3rem;margin:.3rem 0">
+              <img src="${c.icon_url}" style="width:44px;height:44px" alt="">
+              <div class="city-temp">${c.temperature}°C</div>
+            </div>
+            <div class="city-desc">${c.description}</div>
+            <div class="city-meta">
+              <div class="meta-item"><strong>${c.humidity}%</strong>Humidity</div>
+              <div class="meta-item"><strong>${c.wind_speed}</strong>m/s Wind</div>
+              <div class="meta-item"><strong>${c.clouds}%</strong>Clouds</div>
+            </div>
+          </div>`;
+      }).join('');
+    } else {
+      grid.innerHTML = `<p style="color:var(--red);grid-column:1/-1">❌ ${res.message}</p>`;
+    }
+  } catch(e) {
+    loading.style.display = 'none';
+    grid.innerHTML = `<p style="color:var(--red);grid-column:1/-1">❌ Server not reachable.</p>`;
+  }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function searchCity(city) {
+  document.getElementById('w-city').value = city;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  fetchWeather();
+}
+function getWindDir(deg) {
+  if (deg === undefined || deg === null) return '';
+  return ['N','NE','E','SE','S','SW','W','NW'][Math.round(deg/45)%8];
+}
+function formatDate(ds) {
+  return new Date(ds + 'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',month:'short',day:'numeric'});
+}
+</script>
+</body>
+</html>
